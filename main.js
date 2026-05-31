@@ -1,451 +1,363 @@
-import * as THREE from 'three';
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const finePointer = window.matchMedia('(pointer: fine)').matches;
 
-// ─── Intersection Observer for scroll-triggered fade animations ───
-const observerOptions = {
-    root: null,
-    rootMargin: '0px',
-    threshold: 0.1
+const runInAnimationFrame = (callback) => {
+    let queued = false;
+
+    return () => {
+        if (queued) return;
+        queued = true;
+
+        requestAnimationFrame(() => {
+            queued = false;
+            callback();
+        });
+    };
 };
 
-const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
-            observer.unobserve(entry.target);
-        }
-    });
-}, observerOptions);
+const scrollUpdaters = [];
+const resizeUpdaters = [];
 
-document.querySelectorAll('.fade-in-up, .fade-in').forEach(el => {
-    observer.observe(el);
+// Scroll-triggered reveal animations
+const revealObserver = 'IntersectionObserver' in window
+    ? new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.1 })
+    : null;
+
+document.querySelectorAll('.fade-in-up, .fade-in, .reveal-text').forEach(el => {
+    if (revealObserver) {
+        revealObserver.observe(el);
+    } else {
+        el.classList.add('visible');
+    }
 });
 
-// ─── Mobile Menu Toggle ───
+// Mobile menu
 const mobileMenuBtn = document.getElementById('mobile-menu-btn');
 const mobileMenu = document.getElementById('mobile-menu');
 const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
 
 if (mobileMenuBtn && mobileMenu && mobileMenuOverlay) {
-    const toggleMenu = () => {
-        const isOpen = mobileMenu.classList.toggle('open');
+    const setMenuOpen = (isOpen) => {
+        mobileMenu.classList.toggle('open', isOpen);
         mobileMenuBtn.classList.toggle('open', isOpen);
         mobileMenuOverlay.classList.toggle('open', isOpen);
+        mobileMenuBtn.setAttribute('aria-expanded', String(isOpen));
+        mobileMenuOverlay.setAttribute('aria-hidden', String(!isOpen));
         document.body.style.overflow = isOpen ? 'hidden' : '';
     };
 
-    mobileMenuBtn.addEventListener('click', toggleMenu);
-    mobileMenuOverlay.addEventListener('click', toggleMenu);
+    mobileMenuBtn.addEventListener('click', () => {
+        setMenuOpen(!mobileMenu.classList.contains('open'));
+    });
 
-    // Close menu when a link is clicked
+    mobileMenuOverlay.addEventListener('click', () => setMenuOpen(false));
+
     mobileMenu.querySelectorAll('a').forEach(link => {
-        link.addEventListener('click', () => {
-            mobileMenu.classList.remove('open');
-            mobileMenuBtn.classList.remove('open');
-            mobileMenuOverlay.classList.remove('open');
-            document.body.style.overflow = '';
-        });
+        link.addEventListener('click', () => setMenuOpen(false));
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && mobileMenu.classList.contains('open')) {
+            setMenuOpen(false);
+        }
     });
 }
 
-// ─── Navbar hide/show on scroll ───
+// Navbar hide/show on scroll
 const navbar = document.getElementById('navbar');
-let lastScrollY = 0;
-let navbarTimeout = null;
+let lastScrollY = window.scrollY;
 
 if (navbar) {
-    window.addEventListener('scroll', () => {
+    scrollUpdaters.push(() => {
         const currentScrollY = window.scrollY;
-
-        if (currentScrollY > lastScrollY && currentScrollY > 100) {
-            navbar.classList.add('navbar-hidden');
-        } else {
-            navbar.classList.remove('navbar-hidden');
-        }
-
+        navbar.classList.toggle('navbar-hidden', currentScrollY > lastScrollY && currentScrollY > 100);
         lastScrollY = currentScrollY;
-    }, { passive: true });
+    });
 }
 
-// ─── Interactive Mouse Background Effect ───
+// Interactive hero glow
 const mouseGlow = document.getElementById('mouse-glow');
 const uniGlow = document.getElementById('uni-glow');
 
-if (mouseGlow && uniGlow) {
-    let mouseRAFQueued = false;
-    let mouseX = 0;
-    let mouseY = 0;
+if (!prefersReducedMotion && mouseGlow && uniGlow && finePointer) {
+    let mouseX = 0.5;
+    let mouseY = 0.5;
 
-    document.addEventListener('mousemove', (e) => {
-        mouseX = e.clientX / window.innerWidth;
-        mouseY = e.clientY / window.innerHeight;
+    const updateGlow = runInAnimationFrame(() => {
+        const glowX = (mouseX - 0.5) * 40;
+        const glowY = (mouseY - 0.5) * 40;
+        const uniX = (mouseX - 0.5) * -15;
+        const uniY = (mouseY - 0.5) * -15;
 
-        if (!mouseRAFQueued) {
-            mouseRAFQueued = true;
-            requestAnimationFrame(() => {
-                const glowX = (mouseX - 0.5) * 40;
-                const glowY = (mouseY - 0.5) * 40;
-                mouseGlow.style.transform = `translate(calc(-50% + ${glowX}vw), calc(-50% + ${glowY}vh))`;
+        mouseGlow.style.transform = `translate(calc(-50% + ${glowX}vw), calc(-50% + ${glowY}vh))`;
+        uniGlow.style.transform = `translate(calc(-50% + ${uniX}px), calc(-50% + ${uniY}px))`;
+    });
 
-                const uniX = (mouseX - 0.5) * -15;
-                const uniY = (mouseY - 0.5) * -15;
-                uniGlow.style.transform = `translate(calc(-50% + ${uniX}px), calc(-50% + ${uniY}px))`;
-
-                mouseRAFQueued = false;
-            });
-        }
+    document.addEventListener('mousemove', (event) => {
+        mouseX = event.clientX / window.innerWidth;
+        mouseY = event.clientY / window.innerHeight;
+        updateGlow();
     }, { passive: true });
 }
 
-// ─── Smooth scroll for anchor links ───
+// Smooth scroll for anchor links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', (e) => {
-        const target = document.querySelector(anchor.getAttribute('href'));
+    anchor.addEventListener('click', (event) => {
+        const targetId = anchor.getAttribute('href');
+        if (!targetId || targetId === '#') return;
+
+        const target = document.querySelector(targetId);
         if (target) {
-            e.preventDefault();
-            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            event.preventDefault();
+            target.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
         }
     });
 });
 
-// ─── Dotted Surface Three.js Background ───
 function initDottedSurface() {
     const container = document.getElementById('dotted-surface');
-    if (!container) return;
+    const heroSection = document.getElementById('home');
 
-    // Reduce particle count on mobile for performance
-    const isMobile = window.innerWidth <= 768;
-    const SEPARATION = isMobile ? 200 : 150;
-    const AMOUNTX = isMobile ? 20 : 40;
-    const AMOUNTY = isMobile ? 30 : 60;
+    if (!container || prefersReducedMotion) return;
 
-    const scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0x0d0d12, 2000, 10000);
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d', { alpha: true });
 
-    const camera = new THREE.PerspectiveCamera(
-        60,
-        window.innerWidth / window.innerHeight,
-        1,
-        10000
-    );
-    camera.position.set(0, 355, 1220);
+    if (!context) return;
 
-    const renderer = new THREE.WebGLRenderer({
-        alpha: true,
-        antialias: !isMobile, // Disable AA on mobile for perf
-        powerPreference: 'high-performance',
-    });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Cap at 2x
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setClearColor(scene.fog.color, 0);
+    container.appendChild(canvas);
 
-    container.appendChild(renderer.domElement);
-
-    const positions = [];
-    const colors = [];
-    const geometry = new THREE.BufferGeometry();
-
-    for (let ix = 0; ix < AMOUNTX; ix++) {
-        for (let iy = 0; iy < AMOUNTY; iy++) {
-            const x = ix * SEPARATION - (AMOUNTX * SEPARATION) / 2;
-            const y = 0;
-            const z = iy * SEPARATION - (AMOUNTY * SEPARATION) / 2;
-
-            positions.push(x, y, z);
-            colors.push(200 / 255, 200 / 255, 200 / 255);
-        }
-    }
-
-    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-
-    const material = new THREE.PointsMaterial({
-        size: isMobile ? 6 : 8,
-        vertexColors: true,
-        transparent: true,
-        opacity: 0.8,
-        sizeAttenuation: true,
-    });
-
-    const points = new THREE.Points(geometry, material);
-    scene.add(points);
-
-    let count = 0;
+    let width = 0;
+    let height = 0;
+    let pixelRatio = 1;
+    let frameId = 0;
+    let time = 0;
     let isVisible = true;
 
-    // Pause when hero is not visible for performance
-    const heroSection = document.getElementById('home');
-    if (heroSection) {
+    const resize = () => {
+        width = container.clientWidth || window.innerWidth;
+        height = container.clientHeight || window.innerHeight;
+        pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
+
+        canvas.width = Math.round(width * pixelRatio);
+        canvas.height = Math.round(height * pixelRatio);
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
+        context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+    };
+
+    const draw = () => {
+        const isMobile = window.innerWidth <= 768;
+        const columns = isMobile ? 22 : 46;
+        const rows = isMobile ? 28 : 48;
+        const amplitude = isMobile ? 12 : 22;
+        const baseSize = isMobile ? 1.3 : 1.7;
+        const startY = height * 0.27;
+        const depthHeight = height * 0.64;
+
+        context.clearRect(0, 0, width, height);
+
+        for (let row = 0; row < rows; row++) {
+            const depth = row / Math.max(rows - 1, 1);
+            const perspective = 0.35 + depth * 1.25;
+            const alpha = 0.12 + depth * 0.5;
+            const yBase = startY + depth * depthHeight;
+            const yWave = Math.sin(row * 0.55 + time) * amplitude * perspective;
+            const rowOffset = Math.sin(time * 0.45 + row * 0.2) * 16 * depth;
+            const dotSize = baseSize * perspective;
+
+            context.fillStyle = `rgba(180, 205, 255, ${alpha})`;
+
+            for (let column = 0; column < columns; column++) {
+                const xDepthOffset = (column / Math.max(columns - 1, 1) - 0.5) * width * depth * 0.22;
+                const x = (column / Math.max(columns - 1, 1)) * width + rowOffset + xDepthOffset;
+                const y = yBase + yWave + Math.sin(column * 0.42 + time * 0.8) * amplitude * 0.35 * depth;
+
+                context.fillRect(x, y, dotSize, dotSize);
+            }
+        }
+    };
+
+    const stop = () => {
+        if (frameId) {
+            cancelAnimationFrame(frameId);
+            frameId = 0;
+        }
+    };
+
+    const tick = () => {
+        if (!isVisible || document.hidden) {
+            frameId = 0;
+            return;
+        }
+
+        draw();
+        time += 0.075;
+        frameId = requestAnimationFrame(tick);
+    };
+
+    const start = () => {
+        if (!frameId && isVisible && !document.hidden) {
+            frameId = requestAnimationFrame(tick);
+        }
+    };
+
+    resize();
+    draw();
+    start();
+
+    resizeUpdaters.push(() => {
+        resize();
+        draw();
+    });
+
+    if ('ResizeObserver' in window) {
+        new ResizeObserver(() => {
+            resize();
+            draw();
+        }).observe(container);
+    }
+
+    if (heroSection && 'IntersectionObserver' in window) {
         const visibilityObserver = new IntersectionObserver((entries) => {
             isVisible = entries[0].isIntersecting;
+            if (isVisible) {
+                start();
+            } else {
+                stop();
+            }
         }, { threshold: 0 });
+
         visibilityObserver.observe(heroSection);
     }
 
-    const animate = () => {
-        requestAnimationFrame(animate);
-
-        // Skip rendering when not visible
-        if (!isVisible) return;
-
-        const positionAttribute = geometry.attributes.position;
-        const posArray = positionAttribute.array;
-
-        let i = 0;
-        for (let ix = 0; ix < AMOUNTX; ix++) {
-            for (let iy = 0; iy < AMOUNTY; iy++) {
-                const index = i * 3;
-                posArray[index + 1] =
-                    Math.sin((ix + count) * 0.3) * 50 +
-                    Math.sin((iy + count) * 0.5) * 50;
-                i++;
-            }
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            stop();
+        } else {
+            start();
         }
-
-        positionAttribute.needsUpdate = true;
-        renderer.render(scene, camera);
-        count += 0.1;
-    };
-
-    // Debounced resize handler
-    let resizeTimeout;
-    const handleResize = () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }, 150);
-    };
-
-    window.addEventListener('resize', handleResize, { passive: true });
-
-    animate();
+    });
 }
 
 initDottedSurface();
 
-// ─── Container Scroll Animation (3D tilt for Features) ───
+// Container scroll animation for Expertise
 const scrollContainer = document.getElementById('scroll-container');
 const scrollHeader = document.getElementById('scroll-header');
 const scrollCard = document.getElementById('scroll-card');
 
-if (scrollContainer && scrollHeader && scrollCard) {
-    let scrollRAFQueued = false;
-
+if (!prefersReducedMotion && scrollContainer && scrollHeader && scrollCard) {
     const updateScrollAnimation = () => {
         const rect = scrollContainer.getBoundingClientRect();
         const containerHeight = rect.height;
         const windowHeight = window.innerHeight;
-
-        let rawProgress = (windowHeight - rect.top) / (windowHeight + containerHeight);
-        rawProgress = Math.max(0, Math.min(1, rawProgress));
-
-        // Complete animation within first 50% of scroll
-        let progress = Math.min(rawProgress / 0.5, 1);
-
+        const rawProgress = Math.max(0, Math.min(1, (windowHeight - rect.top) / (windowHeight + containerHeight)));
+        const progress = Math.min(rawProgress / 0.5, 1);
         const isMobile = window.innerWidth <= 768;
 
-        const translateY = progress * -100;
-        const rotateX = 45 - (progress * 45);
-        const scale = isMobile
-            ? (0.7 + progress * 0.2)
-            : (1.05 - progress * 0.05);
-
-        scrollHeader.style.transform = `translateY(${translateY}px)`;
-        scrollCard.style.transform = `rotateX(${rotateX}deg) scale(${scale})`;
-        scrollRAFQueued = false;
+        scrollHeader.style.transform = `translateY(${progress * -100}px)`;
+        scrollCard.style.transform = `rotateX(${45 - progress * 45}deg) scale(${isMobile ? 0.7 + progress * 0.2 : 1.05 - progress * 0.05})`;
     };
 
-    window.addEventListener('scroll', () => {
-        if (!scrollRAFQueued) {
-            scrollRAFQueued = true;
-            requestAnimationFrame(updateScrollAnimation);
-        }
-    }, { passive: true });
-
-    window.addEventListener('resize', () => {
-        requestAnimationFrame(updateScrollAnimation);
-    }, { passive: true });
-
+    scrollUpdaters.push(updateScrollAnimation);
+    resizeUpdaters.push(updateScrollAnimation);
     updateScrollAnimation();
 }
 
-// ─── Preloader Logic ───
-const preloader = document.getElementById('preloader');
-const preloaderProgress = document.getElementById('preloader-progress');
-
-if (preloader && preloaderProgress) {
-    let progress = 0;
-    // We want it to take ~2000ms. If we update every 40ms, that's 50 steps.
-    // 100% / 50 steps = 2% per step.
-    const interval = setInterval(() => {
-        progress += 2;
-        if (progress > 100) progress = 100;
-        preloaderProgress.style.width = `${progress}%`;
-        
-        if (progress === 100) {
-            clearInterval(interval);
-            setTimeout(() => {
-                preloader.classList.add('hidden');
-                setTimeout(() => {
-                    preloader.remove(); // Remove from DOM after fade out
-                }, 800);
-            }, 200); // slight pause at 100% before fading out
-        }
-    }, 36); // 36ms * 50 steps = 1800ms + 200ms pause = 2000ms total
-}
-
-// ─── Scroll Progress Bar ───
+// Scroll progress bar
 const scrollProgressBar = document.getElementById('scroll-progress-bar');
 
 if (scrollProgressBar) {
-    window.addEventListener('scroll', () => {
-        const scrollTop = window.scrollY;
+    const updateScrollProgress = () => {
         const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-        const scrollPercent = (scrollTop / docHeight) * 100;
-        scrollProgressBar.style.width = `${scrollPercent}%`;
-    }, { passive: true });
-}
-
-// ─── Custom Interactive Cursor ───
-const cursorDot = document.getElementById('cursor-dot');
-const cursorOutline = document.getElementById('cursor-outline');
-
-if (cursorDot && cursorOutline) {
-    // Only enable on non-touch devices
-    if (window.matchMedia("(pointer: fine)").matches) {
-        let cursorX = window.innerWidth / 2;
-        let cursorY = window.innerHeight / 2;
-        let outlineX = cursorX;
-        let outlineY = cursorY;
-
-        // Mouse move
-        window.addEventListener('mousemove', (e) => {
-            cursorX = e.clientX;
-            cursorY = e.clientY;
-            
-            // Dot follows instantly
-            cursorDot.style.transform = `translate(calc(-50% + ${cursorX}px), calc(-50% + ${cursorY}px))`;
-        }, { passive: true });
-
-        // Outline follows with easing (LERP)
-        const animateCursor = () => {
-            const dx = cursorX - outlineX;
-            const dy = cursorY - outlineY;
-            
-            outlineX += dx * 0.15;
-            outlineY += dy * 0.15;
-            
-            cursorOutline.style.transform = `translate(calc(-50% + ${outlineX}px), calc(-50% + ${outlineY}px))`;
-            
-            requestAnimationFrame(animateCursor);
-        };
-        animateCursor();
-
-        // Hover effects on interactable elements
-        const interactables = document.querySelectorAll('a, button, .portfolio-card');
-        
-        interactables.forEach(el => {
-            el.addEventListener('mouseenter', () => {
-                document.body.classList.add('cursor-hover');
-            });
-            el.addEventListener('mouseleave', () => {
-                document.body.classList.remove('cursor-hover');
-            });
-        });
-    } else {
-        // Hide on touch devices
-        cursorDot.style.display = 'none';
-        cursorOutline.style.display = 'none';
-    }
-}
-
-// ─── Text Reveal ───
-const revealTexts = document.querySelectorAll('.reveal-text');
-
-revealTexts.forEach(el => {
-    observer.observe(el);
-});
-
-// ─── Magnetic Buttons ───
-const magneticBtns = document.querySelectorAll('.magnetic-btn');
-
-magneticBtns.forEach(btn => {
-    btn.addEventListener('mousemove', (e) => {
-        const rect = btn.getBoundingClientRect();
-        const x = e.clientX - rect.left - rect.width / 2;
-        const y = e.clientY - rect.top - rect.height / 2;
-        
-        // The pull factor (lower is weaker)
-        const pull = 0.3;
-        btn.style.transform = `translate(${x * pull}px, ${y * pull}px)`;
-        btn.style.transition = 'none'; // Snap instantly to mouse
-    });
-
-    btn.addEventListener('mouseleave', () => {
-        btn.style.transform = `translate(0px, 0px)`;
-        btn.style.transition = 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; // Spring back
-    });
-});
-
-// ─── Image Parallax ───
-const parallaxImages = document.querySelectorAll('.parallax-img');
-
-if (parallaxImages.length > 0) {
-    let parallaxQueued = false;
-    
-    const updateParallax = () => {
-        const windowHeight = window.innerHeight;
-        
-        parallaxImages.forEach(img => {
-            const container = img.parentElement;
-            const rect = container.getBoundingClientRect();
-            
-            // Check if in viewport
-            if (rect.top < windowHeight && rect.bottom > 0) {
-                // Progress from 0 (just entered bottom) to 1 (just left top)
-                const progress = (windowHeight - rect.top) / (windowHeight + rect.height);
-                // Translate Y from -10% to +10% based on progress
-                const yPercent = (progress - 0.5) * 20; 
-                img.style.transform = `translateY(${yPercent}%)`;
-            }
-        });
-        parallaxQueued = false;
+        const scrollPercent = docHeight > 0 ? Math.min(window.scrollY / docHeight, 1) : 0;
+        scrollProgressBar.style.transform = `scaleX(${scrollPercent})`;
     };
 
-    window.addEventListener('scroll', () => {
-        if (!parallaxQueued) {
-            parallaxQueued = true;
-            requestAnimationFrame(updateParallax);
-        }
-    }, { passive: true });
+    scrollUpdaters.push(updateScrollProgress);
+    resizeUpdaters.push(updateScrollProgress);
+    updateScrollProgress();
 }
 
-// ─── Project Modals ───
+// Magnetic buttons
+const magneticBtns = document.querySelectorAll('.magnetic-btn');
+
+if (!prefersReducedMotion && finePointer && magneticBtns.length > 0) {
+    magneticBtns.forEach(btn => {
+        btn.addEventListener('mousemove', (event) => {
+            const rect = btn.getBoundingClientRect();
+            const x = event.clientX - rect.left - rect.width / 2;
+            const y = event.clientY - rect.top - rect.height / 2;
+
+            btn.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px)`;
+            btn.style.transition = 'none';
+        });
+
+        btn.addEventListener('mouseleave', () => {
+            btn.style.transform = 'translate(0, 0)';
+            btn.style.transition = 'transform 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+        });
+    });
+}
+
+// Image parallax
+const parallaxImages = document.querySelectorAll('.parallax-img');
+
+if (!prefersReducedMotion && parallaxImages.length > 0) {
+    const updateParallax = () => {
+        const windowHeight = window.innerHeight;
+
+        parallaxImages.forEach(img => {
+            const container = img.parentElement;
+            if (!container) return;
+
+            const rect = container.getBoundingClientRect();
+
+            if (rect.top < windowHeight && rect.bottom > 0) {
+                const progress = (windowHeight - rect.top) / (windowHeight + rect.height);
+                img.style.transform = `translateY(${(progress - 0.5) * 20}%)`;
+            }
+        });
+    };
+
+    scrollUpdaters.push(updateParallax);
+    resizeUpdaters.push(updateParallax);
+    updateParallax();
+}
+
+// Project modals
 const projectData = {
     fintech: {
-        title: "Fintech Platform",
-        subtitle: "UI/UX & WebGL Dashboard",
-        img: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80",
-        role: "Lead Frontend Developer",
-        tech: "React, WebGL, TailwindCSS",
-        desc: "A high-performance financial dashboard featuring real-time data visualization through custom WebGL shaders. The interface was designed to handle thousands of data points without dropping frames, offering users an unparalleled analytical experience."
+        title: 'Fintech Platform',
+        subtitle: 'UI/UX & WebGL Dashboard',
+        img: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80',
+        role: 'Lead Frontend Developer',
+        tech: 'React, WebGL, TailwindCSS',
+        desc: 'A high-performance financial dashboard featuring real-time data visualization through custom WebGL shaders. The interface was designed to handle thousands of data points without dropping frames, offering users an unparalleled analytical experience.'
     },
     ecommerce: {
-        title: "E-Commerce 3D",
-        subtitle: "Interactive Product Configurator",
-        img: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80",
-        role: "Creative Developer",
-        tech: "Three.js, Next.js, GSAP",
-        desc: "An immersive e-commerce experience allowing users to configure and rotate products in full 3D space before purchasing. This project increased user engagement time by 300% and significantly boosted conversion rates for premium items."
+        title: 'E-Commerce 3D',
+        subtitle: 'Interactive Product Configurator',
+        img: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80',
+        role: 'Creative Developer',
+        tech: 'Three.js, Next.js, GSAP',
+        desc: 'An immersive e-commerce experience allowing users to configure and rotate products in full 3D space before purchasing. This project increased user engagement time by 300% and significantly boosted conversion rates for premium items.'
     },
     agency: {
-        title: "Creative Agency",
-        subtitle: "Award-winning Awwwards Website",
-        img: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80",
-        role: "UI/UX Designer & Engineer",
-        tech: "Vanilla JS, WebGL, Lenis Scroll",
-        desc: "A flagship portfolio website for a top-tier creative agency. Featuring seamless page transitions, kinetic typography, and fluid webGL distortion effects that won Site of the Day on Awwwards and FWA."
+        title: 'Creative Agency',
+        subtitle: 'Award-winning Awwwards Website',
+        img: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80',
+        role: 'UI/UX Designer & Engineer',
+        tech: 'Vanilla JS, WebGL, Lenis Scroll',
+        desc: 'A flagship portfolio website for a top-tier creative agency. Featuring seamless page transitions, kinetic typography, and fluid WebGL distortion effects that won Site of the Day on Awwwards and FWA.'
     }
 };
 
@@ -454,44 +366,77 @@ const modalOverlay = document.getElementById('modal-overlay');
 const modalClose = document.getElementById('modal-close');
 const portfolioCards = document.querySelectorAll('.portfolio-card');
 
-if (projectModal && portfolioCards.length > 0) {
+if (projectModal && modalOverlay && modalClose && portfolioCards.length > 0) {
     const titleEl = document.getElementById('modal-title');
     const subtitleEl = document.getElementById('modal-subtitle');
     const imgEl = document.getElementById('modal-img');
     const roleEl = document.getElementById('modal-role');
     const techEl = document.getElementById('modal-tech');
     const descEl = document.getElementById('modal-desc');
+    let activeModalTrigger = null;
 
-    const openModal = (projectKey) => {
+    const openModal = (projectKey, trigger) => {
         const data = projectData[projectKey];
-        if (!data) return;
+        if (!data || !titleEl || !subtitleEl || !imgEl || !roleEl || !techEl || !descEl) return;
 
+        activeModalTrigger = trigger || null;
         titleEl.textContent = data.title;
         subtitleEl.textContent = data.subtitle;
         imgEl.src = data.img;
+        imgEl.alt = data.title;
         roleEl.textContent = data.role;
         techEl.textContent = data.tech;
         descEl.textContent = data.desc;
 
         projectModal.classList.add('active');
-        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        document.body.style.overflow = 'hidden';
+        setTimeout(() => modalClose.focus({ preventScroll: true }), 50);
     };
 
     const closeModal = () => {
         projectModal.classList.remove('active');
         document.body.style.overflow = '';
+        activeModalTrigger?.focus({ preventScroll: true });
+        activeModalTrigger = null;
     };
 
     portfolioCards.forEach(card => {
-        // Change cursor to pointer for cards
-        card.style.cursor = 'pointer';
-        
-        card.addEventListener('click', () => {
-            const projectKey = card.getAttribute('data-project');
-            openModal(projectKey);
+        const projectKey = card.getAttribute('data-project');
+
+        card.setAttribute('role', 'button');
+        card.setAttribute('tabindex', '0');
+
+        card.addEventListener('click', () => openModal(projectKey, card));
+        card.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                openModal(projectKey, card);
+            }
         });
     });
 
     modalClose.addEventListener('click', closeModal);
     modalOverlay.addEventListener('click', closeModal);
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && projectModal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+}
+
+if (scrollUpdaters.length > 0) {
+    const updateOnScroll = runInAnimationFrame(() => {
+        scrollUpdaters.forEach(update => update());
+    });
+
+    window.addEventListener('scroll', updateOnScroll, { passive: true });
+}
+
+if (resizeUpdaters.length > 0) {
+    const updateOnResize = runInAnimationFrame(() => {
+        resizeUpdaters.forEach(update => update());
+    });
+
+    window.addEventListener('resize', updateOnResize, { passive: true });
 }

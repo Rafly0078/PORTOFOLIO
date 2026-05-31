@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rafly | Creative Developer — Portfolio</title>
+    <meta name="description" content="Hi, I'm Rafly. A creative developer crafting immersive 3D web experiences and premium digital interfaces.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <nav class="navbar" id="navbar">
+        <div class="logo">KINETIC</div>
+        <ul class="nav-links">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#features">Expertise</a></li>
+            <li><a href="#work">Work</a></li>
+            <li><a href="#contact">Contact</a></li>
+        </ul>
+        <!-- Mobile hamburger button -->
+        <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Toggle navigation menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </nav>
+
+    <!-- Mobile slide-out menu -->
+    <div class="mobile-menu-overlay" id="mobile-menu-overlay"></div>
+    <div class="mobile-menu" id="mobile-menu">
+        <ul>
+            <li><a href="#home">Home</a></li>
+            <li><a href="#features">Expertise</a></li>
+            <li><a href="#work">Work</a></li>
+            <li><a href="#contact">Contact</a></li>
+        </ul>
+    </div>
+
+    <main>
+        <section class="hero" id="home">
+            <!-- Glass Filter SVG -->
+            <svg style="display: none;" aria-hidden="true">
+                <filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox">
+                  <feTurbulence type="fractalNoise" baseFrequency="0.001 0.005" numOctaves="1" seed="17" result="turbulence" />
+                  <feComponentTransfer in="turbulence" result="mapped">
+                    <feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5" />
+                    <feFuncG type="gamma" amplitude="0" exponent="1" offset="0" />
+                    <feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5" />
+                  </feComponentTransfer>
+                  <feGaussianBlur in="turbulence" stdDeviation="3" result="softMap" />
+                  <feSpecularLighting in="softMap" surfaceScale="5" specularConstant="1" specularExponent="100" lightingColor="white" result="specLight">
+                    <fePointLight x="-200" y="-200" z="300" />
+                  </feSpecularLighting>
+                  <feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage" />
+                  <feDisplacementMap in="SourceGraphic" in2="softMap" scale="200" xChannelSelector="R" yChannelSelector="G" />
+                </filter>
+            </svg>
+
+            <div class="hero-bg fade-in">
+                <div class="bg-gradient"></div>
+                <div id="dotted-surface"></div>
+                <div class="bg-glow" id="mouse-glow"></div>
+                <div class="uni-glow" id="uni-glow">
+                    <span class="uni-text">CREATIVE</span>
+                </div>
+                <div class="bg-overlay"></div>
+                <div class="hero-fade-bottom"></div>
+            </div>
+
+            <div class="hero-content glass-container fade-in-up">
+                <div class="glass-layer-1"></div>
+                <div class="glass-layer-2"></div>
+                <div class="glass-layer-3"></div>
+                <div class="glass-content">
+                    <h1>Hi, I'm Rafly.<br> <span class="text-gradient">Creative Developer.</span></h1>
+                    <p>I craft immersive 3D web experiences and premium digital interfaces.</p>
+                    <div class="hero-buttons">
+                        <a href="#work" class="btn-primary">View My Work</a>
+                        <a href="#contact" class="btn-secondary">Contact Me</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="features" id="features">
+            <div class="features-container-scroll" id="scroll-container">
+                <div class="features-perspective-wrapper">
+                    <div class="features-header fade-in-up" id="scroll-header">
+                        <h2>My Expertise</h2>
+                        <p>Pushing the boundaries of what's possible on the web.</p>
+                    </div>
+                    
+                    <div class="scroll-card" id="scroll-card">
+                        <div class="feature-grid">
+                            <!-- Expertise 1 -->
+                            <div class="feature-card">
+                                <div class="icon">✨</div>
+                                <h3>Frontend Engineering</h3>
+                                <p>Building robust, scalable, and pixel-perfect user interfaces with modern frameworks like React and Next.js.</p>
+                            </div>
+                            <!-- Expertise 2 -->
+                            <div class="feature-card">
+                                <div class="icon">⚡</div>
+                                <h3>WebGL & 3D</h3>
+                                <p>Creating immersive and interactive 3D experiences right in the browser using Three.js and custom shaders.</p>
+                            </div>
+                            <!-- Expertise 3 -->
+                            <div class="feature-card">
+                                <div class="icon">🎨</div>
+                                <h3>UI/UX Design</h3>
+                                <p>Designing intuitive and aesthetically pleasing digital products with a focus on user experience and micro-interactions.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Portfolio Section -->
+        <section class="portfolio" id="work">
+            <div class="section-header fade-in-up">
+                <h2>Selected Works</h2>
+                <p>A glimpse into my recent digital creations.</p>
+            </div>
+            <div class="portfolio-grid">
+                <div class="portfolio-card fade-in-up delay-1">
+                    <div class="portfolio-img">
+                        <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=800&q=80" alt="Fintech Platform — UI/UX & WebGL Dashboard" loading="lazy">
+                    </div>
+                    <div class="portfolio-info">
+                        <h3>Fintech Platform</h3>
+                        <p>UI/UX & WebGL Dashboard</p>
+                    </div>
+                </div>
+                <div class="portfolio-card fade-in-up delay-2">
+                    <div class="portfolio-img">
+                        <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80" alt="E-Commerce 3D — Interactive Product Configurator" loading="lazy">
+                    </div>
+                    <div class="portfolio-info">
+                        <h3>E-Commerce 3D</h3>
+                        <p>Interactive Product Configurator</p>
+                    </div>
+                </div>
+                <div class="portfolio-card fade-in-up delay-3">
+                    <div class="portfolio-img">
+                        <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80" alt="Creative Agency — Award-winning Website" loading="lazy">
+                    </div>
+                    <div class="portfolio-info">
+                        <h3>Creative Agency</h3>
+                        <p>Award-winning Awwwards Website</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tech Stack Marquee -->
+        <section class="tech-stack fade-in" id="tech">
+            <div class="marquee-wrapper">
+                <div class="marquee">
+                    <span>THREE.JS</span><span>•</span>
+                    <span>REACT</span><span>•</span>
+                    <span>NEXT.JS</span><span>•</span>
+                    <span>WEBGL</span><span>•</span>
+                    <span>FIGMA</span><span>•</span>
+                    <span>TAILWIND</span><span>•</span>
+                    <span>GSAP</span><span>•</span>
+                    <span>NODE.JS</span><span>•</span>
+                </div>
+                <!-- Duplicate for seamless loop -->
+                <div class="marquee" aria-hidden="true">
+                    <span>THREE.JS</span><span>•</span>
+                    <span>REACT</span><span>•</span>
+                    <span>NEXT.JS</span><span>•</span>
+                    <span>WEBGL</span><span>•</span>
+                    <span>FIGMA</span><span>•</span>
+                    <span>TAILWIND</span><span>•</span>
+                    <span>GSAP</span><span>•</span>
+                    <span>NODE.JS</span><span>•</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section class="contact" id="contact">
+            <div class="contact-container glass-container fade-in-up">
+                <!-- Falling Pattern Background -->
+                <div class="falling-pattern-wrapper">
+                    <div class="falling-pattern-moving"></div>
+                    <div class="falling-pattern-overlay"></div>
+                </div>
+                
+                <div class="glass-layer-1"></div>
+                <div class="glass-layer-2" style="background: rgba(255,255,255,0.02)"></div>
+                <div class="glass-layer-3"></div>
+                <div class="glass-content" style="text-align: center; align-items: center;">
+                    <h2>Ready to build something <span class="text-gradient">amazing?</span></h2>
+                    <p style="margin: 1.5rem 0 2.5rem; color: var(--text-secondary); max-width: 500px;">Let's turn your ideas into reality. Whether it's a simple landing page or a complex 3D web experience, I'm here to help.</p>
+                    <div class="social-links">
+                        <a href="https://www.instagram.com/tmraflyy?igsh=NWplOXNmaWdzcWNh" target="_blank" rel="noopener noreferrer" class="social-tag">Instagram</a>
+                        <a href="https://x.com/PliRapli_" target="_blank" rel="noopener noreferrer" class="social-tag">Twitter (X)</a>
+                        <a href="https://wa.me/6281575573917" target="_blank" rel="noopener noreferrer" class="social-tag">WhatsApp</a>
+                        <a href="mailto:rafly4018@gmail.com" class="social-tag">Gmail</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>© 2025 Rafly. Crafted with passion.</p>
+        </footer>
+    </main>
+
+    <!-- Custom Scripts -->
+    <script type="module" src="./main.js"></script>
+</body>
+</html>

@@ -269,3 +269,229 @@ if (scrollContainer && scrollHeader && scrollCard) {
 
     updateScrollAnimation();
 }
+
+// ─── Preloader Logic ───
+const preloader = document.getElementById('preloader');
+const preloaderProgress = document.getElementById('preloader-progress');
+
+if (preloader && preloaderProgress) {
+    let progress = 0;
+    // We want it to take ~2000ms. If we update every 40ms, that's 50 steps.
+    // 100% / 50 steps = 2% per step.
+    const interval = setInterval(() => {
+        progress += 2;
+        if (progress > 100) progress = 100;
+        preloaderProgress.style.width = `${progress}%`;
+        
+        if (progress === 100) {
+            clearInterval(interval);
+            setTimeout(() => {
+                preloader.classList.add('hidden');
+                setTimeout(() => {
+                    preloader.remove(); // Remove from DOM after fade out
+                }, 800);
+            }, 200); // slight pause at 100% before fading out
+        }
+    }, 36); // 36ms * 50 steps = 1800ms + 200ms pause = 2000ms total
+}
+
+// ─── Scroll Progress Bar ───
+const scrollProgressBar = document.getElementById('scroll-progress-bar');
+
+if (scrollProgressBar) {
+    window.addEventListener('scroll', () => {
+        const scrollTop = window.scrollY;
+        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const scrollPercent = (scrollTop / docHeight) * 100;
+        scrollProgressBar.style.width = `${scrollPercent}%`;
+    }, { passive: true });
+}
+
+// ─── Custom Interactive Cursor ───
+const cursorDot = document.getElementById('cursor-dot');
+const cursorOutline = document.getElementById('cursor-outline');
+
+if (cursorDot && cursorOutline) {
+    // Only enable on non-touch devices
+    if (window.matchMedia("(pointer: fine)").matches) {
+        let cursorX = window.innerWidth / 2;
+        let cursorY = window.innerHeight / 2;
+        let outlineX = cursorX;
+        let outlineY = cursorY;
+
+        // Mouse move
+        window.addEventListener('mousemove', (e) => {
+            cursorX = e.clientX;
+            cursorY = e.clientY;
+            
+            // Dot follows instantly
+            cursorDot.style.transform = `translate(calc(-50% + ${cursorX}px), calc(-50% + ${cursorY}px))`;
+        }, { passive: true });
+
+        // Outline follows with easing (LERP)
+        const animateCursor = () => {
+            const dx = cursorX - outlineX;
+            const dy = cursorY - outlineY;
+            
+            outlineX += dx * 0.15;
+            outlineY += dy * 0.15;
+            
+            cursorOutline.style.transform = `translate(calc(-50% + ${outlineX}px), calc(-50% + ${outlineY}px))`;
+            
+            requestAnimationFrame(animateCursor);
+        };
+        animateCursor();
+
+        // Hover effects on interactable elements
+        const interactables = document.querySelectorAll('a, button, .portfolio-card');
+        
+        interactables.forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                document.body.classList.add('cursor-hover');
+            });
+            el.addEventListener('mouseleave', () => {
+                document.body.classList.remove('cursor-hover');
+            });
+        });
+    } else {
+        // Hide on touch devices
+        cursorDot.style.display = 'none';
+        cursorOutline.style.display = 'none';
+    }
+}
+
+// ─── Text Reveal ───
+const revealTexts = document.querySelectorAll('.reveal-text');
+
+revealTexts.forEach(el => {
+    observer.observe(el);
+});
+
+// ─── Magnetic Buttons ───
+const magneticBtns = document.querySelectorAll('.magnetic-btn');
+
+magneticBtns.forEach(btn => {
+    btn.addEventListener('mousemove', (e) => {
+        const rect = btn.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width / 2;
+        const y = e.clientY - rect.top - rect.height / 2;
+        
+        // The pull factor (lower is weaker)
+        const pull = 0.3;
+        btn.style.transform = `translate(${x * pull}px, ${y * pull}px)`;
+        btn.style.transition = 'none'; // Snap instantly to mouse
+    });
+
+    btn.addEventListener('mouseleave', () => {
+        btn.style.transform = `translate(0px, 0px)`;
+        btn.style.transition = 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; // Spring back
+    });
+});
+
+// ─── Image Parallax ───
+const parallaxImages = document.querySelectorAll('.parallax-img');
+
+if (parallaxImages.length > 0) {
+    let parallaxQueued = false;
+    
+    const updateParallax = () => {
+        const windowHeight = window.innerHeight;
+        
+        parallaxImages.forEach(img => {
+            const container = img.parentElement;
+            const rect = container.getBoundingClientRect();
+            
+            // Check if in viewport
+            if (rect.top < windowHeight && rect.bottom > 0) {
+                // Progress from 0 (just entered bottom) to 1 (just left top)
+                const progress = (windowHeight - rect.top) / (windowHeight + rect.height);
+                // Translate Y from -10% to +10% based on progress
+                const yPercent = (progress - 0.5) * 20; 
+                img.style.transform = `translateY(${yPercent}%)`;
+            }
+        });
+        parallaxQueued = false;
+    };
+
+    window.addEventListener('scroll', () => {
+        if (!parallaxQueued) {
+            parallaxQueued = true;
+            requestAnimationFrame(updateParallax);
+        }
+    }, { passive: true });
+}
+
+// ─── Project Modals ───
+const projectData = {
+    fintech: {
+        title: "Fintech Platform",
+        subtitle: "UI/UX & WebGL Dashboard",
+        img: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80",
+        role: "Lead Frontend Developer",
+        tech: "React, WebGL, TailwindCSS",
+        desc: "A high-performance financial dashboard featuring real-time data visualization through custom WebGL shaders. The interface was designed to handle thousands of data points without dropping frames, offering users an unparalleled analytical experience."
+    },
+    ecommerce: {
+        title: "E-Commerce 3D",
+        subtitle: "Interactive Product Configurator",
+        img: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80",
+        role: "Creative Developer",
+        tech: "Three.js, Next.js, GSAP",
+        desc: "An immersive e-commerce experience allowing users to configure and rotate products in full 3D space before purchasing. This project increased user engagement time by 300% and significantly boosted conversion rates for premium items."
+    },
+    agency: {
+        title: "Creative Agency",
+        subtitle: "Award-winning Awwwards Website",
+        img: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80",
+        role: "UI/UX Designer & Engineer",
+        tech: "Vanilla JS, WebGL, Lenis Scroll",
+        desc: "A flagship portfolio website for a top-tier creative agency. Featuring seamless page transitions, kinetic typography, and fluid webGL distortion effects that won Site of the Day on Awwwards and FWA."
+    }
+};
+
+const projectModal = document.getElementById('project-modal');
+const modalOverlay = document.getElementById('modal-overlay');
+const modalClose = document.getElementById('modal-close');
+const portfolioCards = document.querySelectorAll('.portfolio-card');
+
+if (projectModal && portfolioCards.length > 0) {
+    const titleEl = document.getElementById('modal-title');
+    const subtitleEl = document.getElementById('modal-subtitle');
+    const imgEl = document.getElementById('modal-img');
+    const roleEl = document.getElementById('modal-role');
+    const techEl = document.getElementById('modal-tech');
+    const descEl = document.getElementById('modal-desc');
+
+    const openModal = (projectKey) => {
+        const data = projectData[projectKey];
+        if (!data) return;
+
+        titleEl.textContent = data.title;
+        subtitleEl.textContent = data.subtitle;
+        imgEl.src = data.img;
+        roleEl.textContent = data.role;
+        techEl.textContent = data.tech;
+        descEl.textContent = data.desc;
+
+        projectModal.classList.add('active');
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    };
+
+    const closeModal = () => {
+        projectModal.classList.remove('active');
+        document.body.style.overflow = '';
+    };
+
+    portfolioCards.forEach(card => {
+        // Change cursor to pointer for cards
+        card.style.cursor = 'pointer';
+        
+        card.addEventListener('click', () => {
+            const projectKey = card.getAttribute('data-project');
+            openModal(projectKey);
+        });
+    });
+
+    modalClose.addEventListener('click', closeModal);
+    modalOverlay.addEventListener('click', closeModal);
+}

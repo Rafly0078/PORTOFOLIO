@@ -11,10 +11,26 @@
     <link rel="stylesheet" href="./style.css">
 </head>
 <body>
+    <div class="noise-overlay"></div>
+    
+    <!-- Preloader -->
+    <div id="preloader" class="preloader">
+        <div class="preloader-content">
+            <div class="preloader-logo">MYPORTO.</div>
+            <div class="preloader-bar"><div class="preloader-progress" id="preloader-progress"></div></div>
+        </div>
+    </div>
+
+    <!-- Scroll Progress -->
+    <div id="scroll-progress-container" class="scroll-progress-container">
+        <div id="scroll-progress-bar" class="scroll-progress-bar"></div>
+    </div>
+
     <nav class="navbar" id="navbar">
-        <div class="logo">KINETIC</div>
+        <div class="logo">MYPORTO.</div>
         <ul class="nav-links">
             <li><a href="#home">Home</a></li>
+            <li><a href="#about">About</a></li>
             <li><a href="#features">Expertise</a></li>
             <li><a href="#work">Work</a></li>
             <li><a href="#contact">Contact</a></li>
@@ -32,6 +48,7 @@
     <div class="mobile-menu" id="mobile-menu">
         <ul>
             <li><a href="#home">Home</a></li>
+            <li><a href="#about">About</a></li>
             <li><a href="#features">Expertise</a></li>
             <li><a href="#work">Work</a></li>
             <li><a href="#contact">Contact</a></li>
@@ -74,11 +91,56 @@
                 <div class="glass-layer-2"></div>
                 <div class="glass-layer-3"></div>
                 <div class="glass-content">
-                    <h1>Hi, I'm Rafly.<br> <span class="text-gradient">Creative Developer.</span></h1>
+                    <h1 class="reveal-text">Hi, I'm Rafly.<br> <span class="text-gradient">Creative Developer.</span></h1>
                     <p>I craft immersive 3D web experiences and premium digital interfaces.</p>
                     <div class="hero-buttons">
-                        <a href="#work" class="btn-primary">View My Work</a>
-                        <a href="#contact" class="btn-secondary">Contact Me</a>
+                        <a href="#work" class="btn-primary magnetic-btn">View My Work</a>
+                        <a href="#contact" class="btn-secondary magnetic-btn">Contact Me</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section class="about" id="about">
+            <div class="about-container fade-in-up">
+                <div class="about-grid">
+                    <div class="about-text">
+                        <div class="badge-wrap">
+                            <span class="badge">About Me</span>
+                        </div>
+                        <h2 class="reveal-text">Bridging the gap between <br><span class="text-gradient">design & engineering.</span></h2>
+                        <p class="about-lead">I'm a creative developer passionate about building interactive, high-performance web experiences. My background blends UI/UX design sensibilities with deep technical expertise in WebGL, React, and modern frontend architecture.</p>
+                        <p class="about-sub">When I'm not writing shaders or optimizing components, I'm exploring the latest trends in digital design and creative coding.</p>
+                        
+                        <div class="about-stats">
+                            <div class="stat-item">
+                                <span class="stat-number">3+</span>
+                                <span class="stat-label">Years of<br>Experience</span>
+                            </div>
+                            <div class="stat-divider"></div>
+                            <div class="stat-item">
+                                <span class="stat-number">20+</span>
+                                <span class="stat-label">Projects<br>Completed</span>
+                            </div>
+                            <div class="stat-divider"></div>
+                            <div class="stat-item">
+                                <span class="stat-number">100%</span>
+                                <span class="stat-label">Client<br>Satisfaction</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="about-visual">
+                        <div class="about-visual-bg-glow"></div>
+                        <div class="about-image-wrapper glass-container">
+                            <div class="glass-layer-1"></div>
+                            <div class="glass-layer-2" style="background: rgba(255,255,255,0.01)"></div>
+                            <div class="glass-layer-3"></div>
+                            <div class="about-img-inner">
+                                <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80" alt="Creative coding workspace" loading="lazy">
+                                <div class="about-image-overlay"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -125,27 +187,27 @@
                 <p>A glimpse into my recent digital creations.</p>
             </div>
             <div class="portfolio-grid">
-                <div class="portfolio-card fade-in-up delay-1">
+                <div class="portfolio-card fade-in-up delay-1" data-project="fintech">
                     <div class="portfolio-img">
-                        <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=800&q=80" alt="Fintech Platform — UI/UX & WebGL Dashboard" loading="lazy">
+                        <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=800&q=80" alt="Fintech Platform — UI/UX & WebGL Dashboard" loading="lazy" class="parallax-img">
                     </div>
                     <div class="portfolio-info">
                         <h3>Fintech Platform</h3>
                         <p>UI/UX & WebGL Dashboard</p>
                     </div>
                 </div>
-                <div class="portfolio-card fade-in-up delay-2">
+                <div class="portfolio-card fade-in-up delay-2" data-project="ecommerce">
                     <div class="portfolio-img">
-                        <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80" alt="E-Commerce 3D — Interactive Product Configurator" loading="lazy">
+                        <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80" alt="E-Commerce 3D — Interactive Product Configurator" loading="lazy" class="parallax-img">
                     </div>
                     <div class="portfolio-info">
                         <h3>E-Commerce 3D</h3>
                         <p>Interactive Product Configurator</p>
                     </div>
                 </div>
-                <div class="portfolio-card fade-in-up delay-3">
+                <div class="portfolio-card fade-in-up delay-3" data-project="agency">
                     <div class="portfolio-img">
-                        <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80" alt="Creative Agency — Award-winning Website" loading="lazy">
+                        <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80" alt="Creative Agency — Award-winning Website" loading="lazy" class="parallax-img">
                     </div>
                     <div class="portfolio-info">
                         <h3>Creative Agency</h3>
@@ -198,20 +260,57 @@
                     <h2>Ready to build something <span class="text-gradient">amazing?</span></h2>
                     <p style="margin: 1.5rem 0 2.5rem; color: var(--text-secondary); max-width: 500px;">Let's turn your ideas into reality. Whether it's a simple landing page or a complex 3D web experience, I'm here to help.</p>
                     <div class="social-links">
-                        <a href="https://www.instagram.com/tmraflyy?igsh=NWplOXNmaWdzcWNh" target="_blank" rel="noopener noreferrer" class="social-tag">Instagram</a>
-                        <a href="https://x.com/PliRapli_" target="_blank" rel="noopener noreferrer" class="social-tag">Twitter (X)</a>
-                        <a href="https://wa.me/6281575573917" target="_blank" rel="noopener noreferrer" class="social-tag">WhatsApp</a>
-                        <a href="mailto:rafly4018@gmail.com" class="social-tag">Gmail</a>
+                        <a href="https://www.instagram.com/tmraflyy?igsh=NWplOXNmaWdzcWNh" target="_blank" rel="noopener noreferrer" class="social-tag magnetic-btn">Instagram</a>
+                        <a href="https://x.com/PliRapli_" target="_blank" rel="noopener noreferrer" class="social-tag magnetic-btn">Twitter (X)</a>
+                        <a href="https://wa.me/6281575573917" target="_blank" rel="noopener noreferrer" class="social-tag magnetic-btn">WhatsApp</a>
+                        <a href="mailto:rafly4018@gmail.com" class="social-tag magnetic-btn">Gmail</a>
                     </div>
                 </div>
             </div>
         </section>
 
         <!-- Footer -->
-        <footer class="footer">
-            <p>© 2025 Rafly. Crafted with passion.</p>
+        <footer class="footer fade-in-up">
+            <div class="footer-top">
+                <p>© 2025 Rafly. Crafted with passion.</p>
+                <a href="#home" class="back-to-top magnetic-btn">Back to Top ↑</a>
+            </div>
+            <div class="footer-giant">
+                <h1 class="reveal-text">MYPORTO.</h1>
+            </div>
         </footer>
     </main>
+
+    <!-- Project Modal Template -->
+    <div class="project-modal" id="project-modal">
+        <div class="modal-overlay" id="modal-overlay"></div>
+        <div class="modal-content glass-container">
+            <button class="modal-close" id="modal-close">×</button>
+            <div class="modal-header">
+                <h2 id="modal-title">Project Title</h2>
+                <p id="modal-subtitle">Project Subtitle</p>
+            </div>
+            <div class="modal-body">
+                <img id="modal-img" src="" alt="Project Image">
+                <div class="modal-info">
+                    <div class="modal-col">
+                        <h4>Role</h4>
+                        <p id="modal-role">Frontend Developer</p>
+                    </div>
+                    <div class="modal-col">
+                        <h4>Tech Stack</h4>
+                        <p id="modal-tech">React, WebGL, GSAP</p>
+                    </div>
+                </div>
+                <p id="modal-desc" class="modal-desc">Detailed project description goes here.</p>
+                <a href="#" class="btn-primary" style="margin-top: 1.5rem;">Live Preview ↗</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Cursor -->
+    <div class="cursor-dot" id="cursor-dot"></div>
+    <div class="cursor-outline" id="cursor-outline"></div>
 
     <!-- Custom Scripts -->
     <script type="module" src="./main.js"></script>

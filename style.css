@@ -1316,7 +1316,7 @@ body:hover .cursor-dot, body:hover .cursor-outline {
     }
 
     .uni-glow .uni-text {
-        font-size: clamp(4rem, 15vw, 8rem);
+        font-size: clamp(6rem, 17vw, 10rem);
     }
 }
 

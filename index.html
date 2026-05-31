@@ -47,6 +47,17 @@
 
     <main>
         <section class="hero" id="home">
+            <svg class="glass-filter-defs" aria-hidden="true" focusable="false">
+                <defs>
+                    <filter id="liquid-glass-backdrop" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%">
+                        <feImage id="liquid-glass-displacement-map" x="0" y="0" width="100%" height="100%" preserveAspectRatio="none" result="displacement_map" />
+                        <feDisplacementMap in="SourceGraphic" in2="displacement_map" scale="58" xChannelSelector="R" yChannelSelector="G" result="refracted" />
+                        <feImage id="liquid-glass-specular-map" x="0" y="0" width="100%" height="100%" preserveAspectRatio="none" result="specular_map" />
+                        <feBlend in="refracted" in2="specular_map" mode="screen" result="lit" />
+                    </filter>
+                </defs>
+            </svg>
+
             <div class="hero-bg fade-in">
                 <div class="bg-gradient"></div>
                 <div id="dotted-surface"></div>

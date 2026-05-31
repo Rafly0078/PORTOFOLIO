@@ -18,6 +18,90 @@ const runInAnimationFrame = (callback) => {
 const scrollUpdaters = [];
 const resizeUpdaters = [];
 
+const setSvgImageHref = (element, href) => {
+    element.setAttribute('href', href);
+    element.setAttributeNS('http://www.w3.org/1999/xlink', 'href', href);
+};
+
+const smootherstep = (value) => {
+    const x = Math.max(0, Math.min(1, value));
+    return x * x * x * (x * (x * 6 - 15) + 10);
+};
+
+function initLiquidGlassMaps() {
+    const displacementMap = document.getElementById('liquid-glass-displacement-map');
+    const specularMap = document.getElementById('liquid-glass-specular-map');
+
+    if (!displacementMap || !specularMap) return;
+
+    const size = 512;
+    const bezelWidth = 0.34;
+    const displacementCanvas = document.createElement('canvas');
+    const specularCanvas = document.createElement('canvas');
+    const displacementContext = displacementCanvas.getContext('2d');
+    const specularContext = specularCanvas.getContext('2d');
+
+    if (!displacementContext || !specularContext) return;
+
+    displacementCanvas.width = size;
+    displacementCanvas.height = size;
+    specularCanvas.width = size;
+    specularCanvas.height = size;
+
+    const displacementImage = displacementContext.createImageData(size, size);
+    const specularImage = specularContext.createImageData(size, size);
+
+    for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+            const u = x / (size - 1);
+            const v = y / (size - 1);
+            const left = u;
+            const right = 1 - u;
+            const top = v;
+            const bottom = 1 - v;
+            const edgeX = Math.min(left, right);
+            const edgeY = Math.min(top, bottom);
+            const signX = left < right ? -1 : 1;
+            const signY = top < bottom ? -1 : 1;
+            const distanceX = Math.max(0, 1 - edgeX / bezelWidth);
+            const distanceY = Math.max(0, 1 - edgeY / bezelWidth);
+            const edgeBias = Math.max(distanceX, distanceY);
+            const weightX = smootherstep(distanceX);
+            const weightY = smootherstep(distanceY);
+            const strength = Math.pow(smootherstep(edgeBias), 0.8);
+            const vectorLength = Math.hypot(weightX, weightY) || 1;
+            const normalX = signX * weightX / vectorLength;
+            const normalY = signY * weightY / vectorLength;
+            const innerRelax = Math.pow(Math.max(0, 1 - Math.abs(edgeBias - 0.38) / 0.32), 2) * 0.22;
+            const bend = Math.max(0, strength * 0.95 - innerRelax);
+            const offset = (y * size + x) * 4;
+            const red = 128 + normalX * bend * 112;
+            const green = 128 + normalY * bend * 112;
+            const topRim = Math.max(0, -(normalX * 0.2 + normalY * 0.98)) * Math.pow(strength, 0.9);
+            const sideRim = Math.max(0, Math.abs(normalX) * 0.34 - Math.abs(normalY) * 0.06) * Math.pow(strength, 1.8);
+            const bevelLine = Math.pow(Math.max(0, 1 - Math.abs(edgeBias - 0.96) / 0.08), 2) * 0.45;
+            const alpha = Math.min(230, (topRim * 0.78 + sideRim + bevelLine) * 210);
+
+            displacementImage.data[offset] = Math.max(0, Math.min(255, red));
+            displacementImage.data[offset + 1] = Math.max(0, Math.min(255, green));
+            displacementImage.data[offset + 2] = 128;
+            displacementImage.data[offset + 3] = 255;
+
+            specularImage.data[offset] = 255;
+            specularImage.data[offset + 1] = 255;
+            specularImage.data[offset + 2] = 255;
+            specularImage.data[offset + 3] = alpha;
+        }
+    }
+
+    displacementContext.putImageData(displacementImage, 0, 0);
+    specularContext.putImageData(specularImage, 0, 0);
+    setSvgImageHref(displacementMap, displacementCanvas.toDataURL('image/png'));
+    setSvgImageHref(specularMap, specularCanvas.toDataURL('image/png'));
+}
+
+initLiquidGlassMaps();
+
 // Scroll-triggered reveal animations
 const revealObserver = 'IntersectionObserver' in window
     ? new IntersectionObserver((entries, observer) => {

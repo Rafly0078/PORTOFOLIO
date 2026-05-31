@@ -111,7 +111,7 @@ const revealObserver = 'IntersectionObserver' in window
                 observer.unobserve(entry.target);
             }
         });
-    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.1 })
+    }, { rootMargin: '0px 0px 12% 0px', threshold: 0.1 })
     : null;
 
 document.querySelectorAll('.fade-in-up, .fade-in, .reveal-text').forEach(el => {

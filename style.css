@@ -744,7 +744,7 @@ h1, h2, h3 {
 
 /* ─── Footer ─── */
 .footer {
-    padding: 6rem 5% 0;
+    padding: 6rem 5% max(2rem, env(safe-area-inset-bottom));
     border-top: 1px solid var(--surface-border);
     overflow: hidden;
 }

@@ -18,6 +18,14 @@ const runInAnimationFrame = (callback) => {
 const scrollUpdaters = [];
 const resizeUpdaters = [];
 
+const scheduleIdleWork = (callback) => {
+    if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(callback, { timeout: 1600 });
+    } else {
+        window.setTimeout(callback, 250);
+    }
+};
+
 const setSvgImageHref = (element, href) => {
     element.setAttribute('href', href);
     element.setAttributeNS('http://www.w3.org/1999/xlink', 'href', href);
@@ -102,6 +110,51 @@ function initLiquidGlassMaps() {
 
 initLiquidGlassMaps();
 
+let pageImagesWarmed = false;
+
+function warmPageImages() {
+    if (pageImagesWarmed) return;
+    pageImagesWarmed = true;
+
+    const imageSources = new Set();
+
+    document.querySelectorAll('img').forEach(img => {
+        const rawSrc = img.getAttribute('src');
+
+        if (!rawSrc || rawSrc.trim() === '') return;
+
+        img.decoding = 'async';
+        if ('fetchPriority' in img) img.fetchPriority = 'low';
+        imageSources.add(img.currentSrc || img.src);
+    });
+
+    imageSources.forEach(src => {
+        if (!src) return;
+
+        const image = new Image();
+        image.decoding = 'async';
+        image.loading = 'eager';
+        if ('fetchPriority' in image) image.fetchPriority = 'low';
+        image.src = src;
+
+        if (typeof image.decode === 'function') {
+            image.decode().catch(() => {});
+        }
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        scheduleIdleWork(warmPageImages);
+    }, { once: true });
+} else {
+    scheduleIdleWork(warmPageImages);
+}
+
+window.addEventListener('load', () => {
+    scheduleIdleWork(warmPageImages);
+}, { once: true });
+
 // Scroll-triggered reveal animations
 const revealObserver = 'IntersectionObserver' in window
     ? new IntersectionObserver((entries, observer) => {
@@ -111,7 +164,7 @@ const revealObserver = 'IntersectionObserver' in window
                 observer.unobserve(entry.target);
             }
         });
-    }, { rootMargin: '0px 0px 12% 0px', threshold: 0.1 })
+    }, { rootMargin: '80% 0px 80% 0px', threshold: 0.01 })
     : null;
 
 document.querySelectorAll('.fade-in-up, .fade-in, .reveal-text').forEach(el => {
@@ -339,6 +392,8 @@ const scrollHeader = document.getElementById('scroll-header');
 const scrollCard = document.getElementById('scroll-card');
 
 if (!prefersReducedMotion && scrollContainer && scrollHeader && scrollCard) {
+    let isScrollAnimationActive = false;
+
     const updateScrollAnimation = () => {
         const rect = scrollContainer.getBoundingClientRect();
         const containerHeight = rect.height;
@@ -351,9 +406,24 @@ if (!prefersReducedMotion && scrollContainer && scrollHeader && scrollCard) {
         scrollCard.style.transform = `rotateX(${45 - progress * 45}deg) scale(${isMobile ? 0.7 + progress * 0.2 : 1.05 - progress * 0.05})`;
     };
 
-    scrollUpdaters.push(updateScrollAnimation);
-    resizeUpdaters.push(updateScrollAnimation);
-    updateScrollAnimation();
+    if ('IntersectionObserver' in window) {
+        const scrollAnimationObserver = new IntersectionObserver((entries) => {
+            isScrollAnimationActive = entries[0].isIntersecting;
+            if (isScrollAnimationActive) updateScrollAnimation();
+        }, { rootMargin: '35% 0px 35% 0px', threshold: 0 });
+
+        scrollAnimationObserver.observe(scrollContainer);
+    } else {
+        isScrollAnimationActive = true;
+    }
+
+    scrollUpdaters.push(() => {
+        if (isScrollAnimationActive) updateScrollAnimation();
+    });
+
+    resizeUpdaters.push(() => {
+        if (isScrollAnimationActive) updateScrollAnimation();
+    });
 }
 
 // Scroll progress bar
@@ -396,10 +466,30 @@ if (!prefersReducedMotion && finePointer && magneticBtns.length > 0) {
 const parallaxImages = document.querySelectorAll('.parallax-img');
 
 if (!prefersReducedMotion && parallaxImages.length > 0) {
+    const activeParallaxImages = new Set();
+
+    if ('IntersectionObserver' in window) {
+        const parallaxObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    activeParallaxImages.add(entry.target);
+                } else {
+                    activeParallaxImages.delete(entry.target);
+                }
+            });
+        }, { rootMargin: '25% 0px 25% 0px', threshold: 0 });
+
+        parallaxImages.forEach(img => parallaxObserver.observe(img));
+    } else {
+        parallaxImages.forEach(img => activeParallaxImages.add(img));
+    }
+
     const updateParallax = () => {
+        if (activeParallaxImages.size === 0) return;
+
         const windowHeight = window.innerHeight;
 
-        parallaxImages.forEach(img => {
+        activeParallaxImages.forEach(img => {
             const container = img.parentElement;
             if (!container) return;
 

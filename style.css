@@ -492,20 +492,20 @@ h1, h2, h3 {
 
 /* Container Scroll Animation */
 .features-container-scroll {
-    height: 60rem;
+    height: auto;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
-    padding: 1rem;
+    padding: 4rem 1rem;
     max-width: 1400px;
     margin: 0 auto;
 }
 
 @media (min-width: 768px) {
     .features-container-scroll {
-        height: 80rem;
-        padding: 5rem;
+        height: auto;
+        padding: 8rem 5rem;
     }
 }
 
@@ -1229,7 +1229,7 @@ h1, h2, h3 {
 
     .features-container-scroll {
         height: auto;
-        min-height: 80rem;
+        min-height: auto;
     }
 
     .features-perspective-wrapper {
